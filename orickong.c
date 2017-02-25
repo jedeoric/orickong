@@ -12,12 +12,25 @@
 
 #define DEAD  -16
 #define COMPLETE 1
+
+#ifdef CC65
+#include <telestrat.h>
+#include "../oric-common/include/telemon.h"
+#define poke(addr,val)     (*(unsigned char*) (addr) = (val))
+#include <stdio.h>
+#include <string.h>
+
+int fin(void);
+#else
 #include <lib.h>
+#endif
 
 // Declare the assembly code function
 void AdvancedPrint(char x_pos,char y_pos,const char *ptr_message);
 
 # define PLOTS(x,y,str) AdvancedPrint( (char) (x), (char) y+1, str)
+
+
 
 // Global variables
 unsigned char* screen=(unsigned char*)0xBB80;
@@ -160,14 +173,22 @@ void perte()
         printf("\n\nVOUS VENEZ DE REALISER UN\nDE 7 MEILLEURS SCORES");
         printf("\n\nVOTRE NOM S.V.P:"); gets(strng);
         strng[15]=0;
+#ifdef CC65
+	    strncpy(hs[t], strng,strlen(strng));
+#else
         strncpy(hs[t], strng);
+#endif	
     }
     cls(); ink(4);
     printf("%c\n%cN%cQ          --- ORIC KONG ---\n%c\n\n",4,27,27,4);
     cl=1;
     for(i=1; i<=7; ++i) printf("- %d -  %d\n\n", i, hsi[i]);
     for(i=4; i<=16; i+=2) {PLOT(1,i,cl); PLOTS(17,i,hs[cl]); ++cl; }
+#ifdef TELEMON
+key();
+#else
     getchar();
+#endif
     nb=6; le=1; li=100; sc=0; t=sc;
 
 }
@@ -294,7 +315,12 @@ int readkeybrd()
     switch (key())
     {
       case 'I': return jump();
-      case '[': getchar();
+      case '[': 
+#ifdef TELEMON
+key();
+#else
+		getchar();
+#endif	
       case 'P': a=1; bh='d'; break;
       case 'O': a=-1; bh='e'; break;
       case 'Q': if (SCRN(x, y-1)=='h') b=-4; break;
@@ -381,7 +407,7 @@ void howhigh()
 /******************************************************************************
                                   GORILA KILLED
 *******************************************************************************/
-int fin()
+int fin(void)
 {
     int i;
 
@@ -413,7 +439,7 @@ int fin()
     music(1,3,8,9);WAIT(100);
     ping();WAIT(100);++le;t=0;
 
-    return;
+    return 0;
 }
 
 /******************************************************************************
@@ -560,7 +586,13 @@ action3:
     pressedkey=key();
     switch (pressedkey)
     {
-      case '[': {getchar(); break;}
+      case '[': {
+#ifdef TELEMON
+	key();
+#else		  
+		  getchar();
+#endif	  
+		  break;}
       case 'P': {if(dO!='h' || ap!='h') {a=1; bh='d';} break;}
       case 'O': {if(dO!='h' || ap!='h') {a=-1; bh='e';} break;}
       case 'Q': {if(du=='h' || ap=='h') {b=-1; bh='a';} break;} 
@@ -802,15 +834,28 @@ void main()
     int i;
 
     x=9; y=25; bh='d'; nb=3; le=1;
-    cls(); paper(0); ink(7); zap();
-
-    poke(618,10); printf("\n\n"); poke(0x20C,255);
+    cls();
+	paper(0); 
+	ink(7);
+	zap();
+#ifdef TELEMON
+#else
+    poke(618,10);
+#endif	
+	printf("\n\n");
+#ifdef TELEMON
+#else	
+	poke(0x20C,255);
+#endif
     play(7,0,0,0);
     printf("%c\n", 4);
     printf("\n");
-    for (i=48000; i<48040; ++i) poke(i, 20);
+#ifdef TELEMON
+#else		
+    for (i=0xbb80; i<48040; ++i) poke(i, 20);
+#endif
     for (i=0; i<strlen(A); ++i) poke(i+48005, A[i]);
-    poke(48019,1); poke(48022,7);
+    poke(0xbb93,1); poke(48022,7);
     printf("\n\n\n\n\n\n\n");
     printf("%cN%cC               ORIC KONG", 27, 27);
     printf("%c",4);
@@ -819,7 +864,12 @@ void main()
     generatecharacters();
     PLOTS(2,23,"PRESSEZ UNE TOUCHE..."); 
     //for (i=0; i<10; ++i) printf("%d ", (rnd(5))); 
-    getchar(); cls();
+#ifdef TELEMON
+	key();
+#else		
+    getchar();
+#endif	
+	cls();
     PLOT(1,1,3); PLOTS(11,1,"--- ORIC KONG ---"); ink(4);
     PLOT(1,9,1); 
     li=100;
